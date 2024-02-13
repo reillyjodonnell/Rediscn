@@ -1,5 +1,3 @@
-'use client';
-
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { Table } from '@tanstack/react-table';
 
@@ -19,21 +17,20 @@ export function DataTableToolbar<TData>({
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
-        <span>Search</span>
         <Input
           placeholder="Filter data..."
           value={(table.getColumn('key')?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
             table.getColumn('key')?.setFilterValue(event.target.value)
           }
-          className="h-8 w-full"
+          className="h-8 w-full max-w-[300px]"
         />
 
         {isFiltered && (
           <Button
             variant="ghost"
             onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
+            className="h-8 px-2 lg:px-3 justify-center items-center flex"
           >
             Reset
             <Cross2Icon className="ml-2 h-4 w-4" />

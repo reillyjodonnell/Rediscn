@@ -1,13 +1,15 @@
-import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { ActionFunctionArgs, json, type MetaFunction } from '@remix-run/node';
+import { Form, useLoaderData } from '@remix-run/react';
 import { columns } from '~/components/columns';
+import { CreateButton } from '~/components/create-button';
 import { DataTable } from '~/components/data-table';
+import { UserNav } from '~/components/user-nav';
 import { db } from '~/utils/db.server';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'New Remix App' },
-    { name: 'description', content: 'Welcome to Remix!' },
+    { title: 'RedisCN' },
+    { name: 'description', content: 'Welcome to Rediscn' },
   ];
 };
 
@@ -33,10 +35,37 @@ export default function Index() {
             <h2 className="text-2xl font-bold tracking-tight">Rediscn!</h2>
             <p className="text-muted-foreground">Here&apos;s your data</p>
           </div>
-          <div className="flex items-center space-x-2">{/* <UserNav /> */}</div>
+          <div className="ml-auto mr-6">
+            <Form method="post">
+              <CreateButton />
+            </Form>
+          </div>
+          <div className="flex items-center space-x-2">
+            <UserNav />
+          </div>
         </div>
+
         <DataTable data={data} columns={columns} />
       </div>
     </div>
   );
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const body = await request.formData();
+  const key = body.get('key');
+  const value = body.get('value');
+  console.log(`key: ${key}, value: ${value}`);
+
+  //convert them to string
+  const keyString = key?.toString();
+  const valueString = value?.toString();
+
+  // if the key and value are not empty, add them to the database
+  if (keyString && valueString) {
+    await db.set(keyString, valueString);
+  }
+
+  // redirect to the home page
+  return json({ location: '/' }, { status: 201 });
 }

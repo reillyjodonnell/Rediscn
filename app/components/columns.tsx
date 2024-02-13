@@ -4,7 +4,6 @@ import { Checkbox } from './ui/checkbox';
 
 import { Item } from '../data/schema';
 import { DataTableColumnHeader } from './data-table-column-header';
-import { Input } from './ui/input';
 import { DataTableRowActions } from './data-table-row-actions';
 
 export const columns: ColumnDef<Item>[] = [
