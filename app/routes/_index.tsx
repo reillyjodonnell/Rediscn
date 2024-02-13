@@ -17,7 +17,6 @@ export const loader = async () => {
   const keys = await db.keys('*');
   // get the value for each key
   const values = await Promise.all(keys.map((key) => db.get(key)));
-  console.log(values);
 
   // return them as key value pairs
   return json(keys.map((key, i) => ({ key, value: values[i] })));
@@ -53,19 +52,27 @@ export default function Index() {
 
 export async function action({ request }: ActionFunctionArgs) {
   const body = await request.formData();
-  const key = body.get('key');
-  const value = body.get('value');
-  console.log(`key: ${key}, value: ${value}`);
+  const intent = body.get('intent')?.toString();
+  const key = body.get('key')?.toString();
+  const value = body.get('value')?.toString();
+  const preset = body.get('preset')?.toString();
 
-  //convert them to string
-  const keyString = key?.toString();
-  const valueString = value?.toString();
+  switch (intent) {
+    case 'create':
+      console.log('preset', preset);
+      if (!key || !value || !preset)
+        throw new Error('Key, value, and preset are required');
+      if (preset === 'string') {
+        await db.set(key, value);
+        return json({ location: '/' }, { status: 201 });
+      }
+      break;
+    case 'delete':
+      if (!key) throw new Error('Key is required');
+      await db.del(key);
+      return json({ location: '/' }, { status: 200 });
 
-  // if the key and value are not empty, add them to the database
-  if (keyString && valueString) {
-    await db.set(keyString, valueString);
+    default:
+      return json({ location: '/' }, { status: 400 });
   }
-
-  // redirect to the home page
-  return json({ location: '/' }, { status: 201 });
 }

@@ -65,8 +65,6 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  console.log(table.getRowModel().rows);
-
   return (
     <div className="space-y-4">
       <div className="my-4">

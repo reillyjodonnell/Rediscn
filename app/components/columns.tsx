@@ -34,34 +34,53 @@ export const columns: ColumnDef<Item>[] = [
   {
     accessorKey: 'key',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Key" />
+      <DataTableColumnHeader
+        column={column}
+        className="flex ml-6 lg:min-w-[400px] max-w-[400px]"
+        title="Key"
+      />
     ),
-    cell: ({ row }) => <div className="w-[80px]">{row.getValue('key')}</div>,
+    cell: ({ row }) => (
+      <div className="flex ml-6 lg:min-w-[400px] max-w-[400px]">
+        {row.getValue('key')}
+      </div>
+    ),
+    enableHiding: false,
   },
   {
     accessorKey: 'value',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Value" />
+      <DataTableColumnHeader
+        column={column}
+        className="flex w-full lg:min-w-[400px] max-w-[500px]"
+        title="Value"
+      />
     ),
     cell: ({ row }) => {
       return (
-        <div className="flex space-x-2">
-          <span className="max-w-[500px] truncate font-medium">
+        <div className="flex w-full lg:min-w-[400px] max-w-[500px]">
+          <span className="truncate font-medium w-full ">
             {row.getValue('value')}
           </span>
         </div>
       );
     },
     enableSorting: false,
-    enableHiding: false,
   },
   {
+    accessorKey: 'actions',
     id: 'actions',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Actions" />
+      <DataTableColumnHeader
+        column={column}
+        className="max-w-[80px]"
+        title="Actions"
+      />
     ),
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => (
+      <DataTableRowActions className="w-[100px] max-w-[80px]" row={row} />
+    ),
     enableSorting: false,
-    enableHiding: false,
+    enableHiding: true,
   },
 ];

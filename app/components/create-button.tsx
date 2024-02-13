@@ -13,6 +13,9 @@ import {
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Form } from '@remix-run/react';
+import { PresetSelector } from './preset-selector';
+import { presets } from '~/data/redis-preset';
+import { toast } from 'sonner';
 
 export function CreateButton() {
   return (
@@ -39,12 +42,32 @@ export function CreateButton() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="value">Value</Label>
-              <Input name="value" id="value" />
+              <div className="flex ">
+                <Input name="value" id="value" />
+                <div className="mx-2">
+                  <PresetSelector presets={presets} />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">Create</Button>
+              <Button
+                onClick={() => {
+                  toast('Event has been created', {
+                    description: 'Sunday, December 03, 2023 at 9:00 AM',
+                    action: {
+                      label: 'Undo',
+                      onClick: () => console.log('Undo'),
+                    },
+                  });
+                }}
+                name="intent"
+                value="create"
+                type="submit"
+              >
+                Create
+              </Button>
             </DialogClose>
           </DialogFooter>
         </Form>
