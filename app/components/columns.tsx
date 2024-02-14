@@ -5,6 +5,7 @@ import { Checkbox } from './ui/checkbox';
 import { Item } from '../data/schema';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableRowActions } from './data-table-row-actions';
+import { ValuePreview } from './value-preview';
 
 export const columns: ColumnDef<Item>[] = [
   {
@@ -57,11 +58,11 @@ export const columns: ColumnDef<Item>[] = [
       />
     ),
     cell: ({ row }) => {
+      const rowKey = row.getValue('key') as string;
+      const value = row.getValue('value') as string;
       return (
         <div className="flex w-full lg:min-w-[400px] max-w-[500px]">
-          <span className="truncate font-medium w-full ">
-            {row.getValue('value')}
-          </span>
+          <ValuePreview rowKey={rowKey} value={value} />
         </div>
       );
     },

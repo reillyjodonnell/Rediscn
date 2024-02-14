@@ -2,7 +2,7 @@ import { Row } from '@tanstack/react-table';
 
 import { itemSchema } from '../data/schema';
 import { Button } from './ui/button';
-import { FileEditIcon, TrashIcon } from 'lucide-react';
+import { FileEditIcon, PencilLine, TrashIcon } from 'lucide-react';
 import { Form } from '@remix-run/react';
 
 interface DataTableRowActionsProps<TData>
@@ -18,7 +18,7 @@ export function DataTableRowActions<TData>({
   return (
     <div {...props} className=" flex ">
       <Button className="h-8 w-8 p-2 mr-2" size="icon" variant="outline">
-        <FileEditIcon className="h-full w-full" />
+        <PencilLine className="h-full w-full" />
         <span className="sr-only">Edit</span>
       </Button>
       <Form method="DELETE">

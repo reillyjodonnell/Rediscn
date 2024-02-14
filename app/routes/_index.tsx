@@ -67,6 +67,10 @@ export async function action({ request }: ActionFunctionArgs) {
         return json({ location: '/' }, { status: 201 });
       }
       break;
+    case 'edit':
+      if (!key || !value) throw new Error('Key and value are required');
+      await db.set(key, value);
+      return json({ location: '/' }, { status: 200 });
     case 'delete':
       if (!key) throw new Error('Key is required');
       await db.del(key);
