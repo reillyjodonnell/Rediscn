@@ -82,9 +82,9 @@ export function DataTable<TData, TValue>({
       <div className="my-4">
         <DataTableToolbar table={table} />
       </div>
-      <div ref={parentRef} className="rounded-md border">
+      <div ref={parentRef} className="">
         <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
-          <Table>
+          <Table className="rounded-md border">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
