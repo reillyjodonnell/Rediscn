@@ -5,6 +5,7 @@ import { z } from 'zod';
 export const itemSchema = z.object({
   key: z.string(),
   value: z.string(),
+  type: z.string(),
 });
 
 export type Item = z.infer<typeof itemSchema>;

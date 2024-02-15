@@ -16,6 +16,7 @@ import { Form } from '@remix-run/react';
 import { PresetSelector } from './preset-selector';
 import { presets } from '~/data/redis-preset';
 import { toast } from 'sonner';
+import { RedisCreator } from './redis-creator';
 
 export function CreateButton() {
   return (
@@ -34,30 +35,7 @@ export function CreateButton() {
             This will add your entry to the redis database
           </DialogDescription>
         </DialogHeader>
-        <Form method="post">
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="key">Key</Label>
-              <Input name="key" id="key" autoFocus />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="value">Value</Label>
-              <div className="flex ">
-                <Input name="value" id="value" />
-                <div className="mx-2">
-                  <PresetSelector presets={presets} />
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button name="intent" value="create" type="submit">
-                Create
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </Form>
+        <RedisCreator />
       </DialogContent>
     </Dialog>
   );

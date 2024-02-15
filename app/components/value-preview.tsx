@@ -3,10 +3,9 @@ import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { EditorContent, ReactNodeViewRenderer, useEditor } from '@tiptap/react';
-
 // load all highlight.js languages
 import { createLowlight, common } from 'lowlight';
-import React from 'react';
+import React, { useTransition } from 'react';
 
 import json from 'highlight.js/lib/languages/json';
 import 'highlight.js/styles/github-dark.css';
@@ -24,32 +23,26 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
 import { Button } from './ui/button';
-import { Label } from '@radix-ui/react-dropdown-menu';
 import { Input } from './ui/input';
 import { Form } from '@remix-run/react';
-
-function isValidJSON(text: string) {
-  try {
-    JSON.parse(text);
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
+import { Switch } from './ui/switch';
+import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
 
 export function ValuePreview({
   rowKey,
   value,
+  label,
+  type,
 }: {
   rowKey: string;
   value: string;
+  label: string;
+  type: string;
 }) {
   const editor = useEditor({
     extensions: [
@@ -89,41 +82,58 @@ export function ValuePreview({
     }
   }, [value, editor]);
 
+  const [isRaw, setIsRaw] = React.useState(false);
+
+  let transition = useTransition();
+
+  console.log('transition', transition);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <span className="truncate font-medium w-full cursor-pointer">
           {value}
         </span>
-        {/* <Button variant="secondary">{value}</Button> */}
       </DialogTrigger>
       <DialogContent className="">
-        {/* <DialogHeader>
-          <DialogTitle>Save preset</DialogTitle>
-          <DialogDescription>
-            This will save the current playground state as a preset which you
-            can access later or share with others.
-          </DialogDescription>
-        </DialogHeader> */}
         <Form method="POST">
+          <input type="hidden" name="preset" value={type} />
+          <input type="hidden" name="label" value={label} />
           <div className="my-4">
             <div className="grid gap-2">
-              <Label>Key</Label>
-              <Input id="email" type="text" value={rowKey} />
+              <Label htmlFor="key">Key</Label>
+              <Input id="key" type="text" value={rowKey} />
             </div>
           </div>
           <div className="grid gap-2">
-            <Label>Value</Label>
-            <EditorContent placeholder="No text" editor={editor} />
-
+            <div className="flex ">
+              <Label htmlFor="value">Value</Label>
+              <div className="flex items-center space-x-2 ml-auto">
+                <Switch
+                  checked={isRaw}
+                  onCheckedChange={() => setIsRaw((prev) => !prev)}
+                  id="raw"
+                />
+                <Label htmlFor="raw">Raw JSON</Label>
+              </div>
+            </div>
+            {isRaw ? (
+              <div className="my-4">
+                <Textarea name="value" id="value" defaultValue={value} />
+              </div>
+            ) : (
+              <>
+                <input
+                  type="hidden"
+                  name="value"
+                  id="value"
+                  value={editor?.state.doc.textContent ?? value}
+                />
+                <EditorContent placeholder="No text" editor={editor} />
+              </>
+            )}
             <input type="hidden" name="intent" value="edit" />
             <input type="hidden" name="key" id="key" value={rowKey} />
-            <input
-              type="hidden"
-              name="value"
-              id="value"
-              value={editor?.state.doc.textContent ?? value}
-            />
           </div>
           <DialogFooter>
             <DialogClose asChild>

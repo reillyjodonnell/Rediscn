@@ -6,6 +6,34 @@ import { Item } from '../data/schema';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableRowActions } from './data-table-row-actions';
 import { ValuePreview } from './value-preview';
+import { Badge } from './ui/badge';
+
+export const labels = [
+  {
+    value: 'string',
+    label: 'String',
+  },
+  {
+    value: 'hash',
+    label: 'hash',
+  },
+  {
+    value: 'list',
+    label: 'List',
+  },
+  {
+    value: 'set',
+    label: 'Set',
+  },
+  {
+    value: 'zset',
+    label: 'Zset',
+  },
+  {
+    value: 'stream',
+    label: 'Stream',
+  },
+];
 
 export const columns: ColumnDef<Item>[] = [
   {
@@ -35,34 +63,48 @@ export const columns: ColumnDef<Item>[] = [
   {
     accessorKey: 'key',
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        className="flex ml-6 lg:min-w-[400px] max-w-[400px]"
-        title="Key"
-      />
+      <DataTableColumnHeader column={column} className="flex" title="Key" />
     ),
-    cell: ({ row }) => (
-      <div className="flex ml-6 lg:min-w-[400px] max-w-[400px]">
-        {row.getValue('key')}
-      </div>
-    ),
+    cell: ({ row }) => {
+      return <div className="flex ">{row.getValue('key')}</div>;
+    },
     enableHiding: false,
   },
   {
     accessorKey: 'value',
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        className="flex w-full lg:min-w-[400px] max-w-[500px]"
-        title="Value"
-      />
-    ),
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader
+          column={column}
+          className="flex w-full lg:min-w-[400px] max-w-[500px]"
+          title="Value"
+        />
+      );
+    },
     cell: ({ row }) => {
       const rowKey = row.getValue('key') as string;
       const value = row.getValue('value') as string;
+      const label = labels.find(
+        (label) => label.value === row.original.type
+      )?.label;
+      const type = row.original.type;
+
+      if (!label) throw new Error('Label not found');
+
       return (
         <div className="flex w-full lg:min-w-[400px] max-w-[500px]">
-          <ValuePreview rowKey={rowKey} value={value} />
+          {label && (
+            <Badge className="mx-2" variant="outline">
+              {label}
+            </Badge>
+          )}
+
+          <ValuePreview
+            type={type}
+            label={label}
+            rowKey={rowKey}
+            value={value}
+          />
         </div>
       );
     },

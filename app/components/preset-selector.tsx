@@ -15,18 +15,21 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Preset } from '~/data/redis-preset';
 
 interface PresetSelectorProps extends PopoverProps {
+  selectedPreset: Preset | null;
+  setSelectedPreset: (preset: Preset) => void;
   presets: Preset[];
 }
 
-export function PresetSelector({ presets, ...props }: PresetSelectorProps) {
+export function PresetSelector({
+  selectedPreset,
+  setSelectedPreset,
+  presets,
+  ...props
+}: PresetSelectorProps) {
   const [open, setOpen] = React.useState(false);
-  const [selectedPreset, setSelectedPreset] = React.useState<Preset>(
-    () => presets[0]
-  );
 
   return (
     <Popover open={open} onOpenChange={setOpen} {...props}>
-      <input hidden name="preset" id="preset" value={selectedPreset?.id} />
       <PopoverTrigger asChild>
         <Button
           variant="outline"
