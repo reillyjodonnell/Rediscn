@@ -1,5 +1,6 @@
 import { ActionFunctionArgs, json, type MetaFunction } from '@remix-run/node';
-import { Form, useLoaderData } from '@remix-run/react';
+import { Form, useLoaderData, defer } from '@remix-run/react';
+import { useTransition } from 'react';
 import { columns } from '~/components/columns';
 import { CreateButton } from '~/components/create-button';
 import { DataTable } from '~/components/data-table';
@@ -52,7 +53,10 @@ export const loader = async () => {
 
 export default function Index() {
   const data = useLoaderData<{ key: string; value: string; type: string }[]>();
-  console.log('data length: ', data.length);
+  let transition = useTransition();
+  console.log(transition);
+
+  console.log(data.length);
   return (
     <div className=" h-full flex-1 flex-col space-y-8 p-8 flex">
       <div className="p-4">
@@ -67,7 +71,11 @@ export default function Index() {
             </Form>
           </div>
         </div>
-        <DataTable data={data} columns={columns} />
+        <DataTable
+          loading={transition.state === 'loading' ?? false}
+          data={data}
+          columns={columns}
+        />
       </div>
     </div>
   );

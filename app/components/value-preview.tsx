@@ -66,9 +66,11 @@ export function ValuePreview({
 
     try {
       // Attempt to parse the JSON to see if it is valid
+      //recursively go through each layer and parse
       const json = JSON.parse(value);
+
       // Prettify and format the JSON string
-      formattedValue = JSON.stringify(json, null, 2);
+      formattedValue = JSON.stringify(deepParseJson(json), null, 2);
     } catch (error) {
       // If it's not valid JSON, you could handle it differently or just use the original value
       console.error('Provided value is not valid JSON:', error);
@@ -85,8 +87,6 @@ export function ValuePreview({
   const [isRaw, setIsRaw] = React.useState(false);
 
   let transition = useTransition();
-
-  console.log('transition', transition);
 
   return (
     <Dialog>
@@ -144,4 +144,22 @@ export function ValuePreview({
       </DialogContent>
     </Dialog>
   );
+}
+
+function deepParseJson(obj: any) {
+  Object.keys(obj).forEach((key) => {
+    try {
+      // Attempt to parse the property if it's a string
+      if (typeof obj[key] === 'string') {
+        obj[key] = JSON.parse(obj[key]);
+      }
+      // If the property is an object, recursively parse it
+      if (typeof obj[key] === 'object') {
+        deepParseJson(obj[key]);
+      }
+    } catch (e) {
+      // If parsing throws an error, leave the property as is
+    }
+  });
+  return obj;
 }
