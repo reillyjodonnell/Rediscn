@@ -12,20 +12,32 @@ export const SkeletonDataTable: React.FC<SkeletonDataTableProps> = ({
   rowsCount,
 }) => {
   return (
-    <div className="space-y-4">
-      <Table className="rounded-md border">
-        <TableBody>
-          {Array.from({ length: rowsCount }, (_, rowIndex) => (
-            <TableRow key={rowIndex}>
-              {Array.from({ length: columnsCount }, (_, colIndex) => (
-                <TableCell key={colIndex}>
-                  <Skeleton className="h-4 w-[250px]" />
-                </TableCell>
+    <div className="">
+      <div className="flex justify-start py-4">
+        <div>
+          <Skeleton className="h-8 w-[300px]" />
+        </div>
+        <div className="ml-auto">
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </div>
+      <div className="">
+        <div className="space-y-4">
+          <Table className="rounded-md border">
+            <TableBody>
+              {Array.from({ length: rowsCount }, (_, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {Array.from({ length: columnsCount }, (_, colIndex) => (
+                    <TableCell key={colIndex} className="px-16">
+                      <Skeleton className="h-4 w-[300px]" />
+                    </TableCell>
+                  ))}
+                </TableRow>
               ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 };

@@ -90,11 +90,7 @@ export default function Index() {
           </div>
         </div>
         <Suspense
-          fallback={
-            <div className="mt-16">
-              <SkeletonDataTable columnsCount={3} rowsCount={10} />
-            </div>
-          }
+          fallback={<SkeletonDataTable columnsCount={3} rowsCount={20} />}
         >
           <Await resolve={data}>
             {(data) => (
