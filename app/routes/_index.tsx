@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, json, type MetaFunction } from '@remix-run/node';
-import { Form, useLoaderData, defer } from '@remix-run/react';
-import { useTransition } from 'react';
+import { Form, useLoaderData, defer, Await } from '@remix-run/react';
+import { Suspense, useTransition } from 'react';
 import { columns } from '~/components/columns';
 import { CreateButton } from '~/components/create-button';
 import { DataTable } from '~/components/data-table';
@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => {
 export const loader = async () => {
   const keys = await db.keys('*');
 
-  const results = await Promise.all(
+  const results = Promise.all(
     keys.map(async (key) => {
       const type = await db.type(key); // Determine the type of the key
       let value = ''; // Placeholder for the value
@@ -48,7 +48,7 @@ export const loader = async () => {
   );
 
   // Return the results as JSON
-  return json(results);
+  return defer(json(results));
 };
 
 export default function Index() {
@@ -71,11 +71,13 @@ export default function Index() {
             </Form>
           </div>
         </div>
-        <DataTable
-          loading={transition.state === 'loading' ?? false}
-          data={data}
-          columns={columns}
-        />
+        <Suspense fallback={<span>Loading...</span>}>
+          <Await resolve={data}>
+            {(data) => (
+              <DataTable loading={false} data={data} columns={columns} />
+            )}
+          </Await>
+        </Suspense>
       </div>
     </div>
   );
