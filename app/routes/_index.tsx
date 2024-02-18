@@ -12,14 +12,6 @@ import { CreateButton } from '~/components/create-button';
 import { DataTable } from '~/components/data-table';
 import { db } from '~/utils/db.server';
 
-function slow(delay: number) {
-  return function (data) {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(data), delay);
-    });
-  };
-}
-
 export const meta: MetaFunction = () => {
   return [
     { title: 'RedisCN' },
@@ -40,28 +32,36 @@ export const loader = async () => {
           break;
         case 'list':
           // Retrieve the entire list (consider limiting the range for large lists)
-          valuePromise = JSON.stringify(db.lrange(key, 0, -1));
+          const listData = await db.lrange(key, 0, -1);
+          valuePromise = JSON.stringify(listData);
           break;
         case 'set':
-          valuePromise = JSON.stringify(db.smembers(key));
+          const setData = db.smembers(key);
+          valuePromise = JSON.stringify(setData);
           break;
         case 'zset':
           // Retrieve the entire sorted set (consider limiting the range for large sets)
-          valuePromise = JSON.stringify(db.zrange(key, 0, -1, 'WITHSCORES'));
+          const zsetData = db.zrange(key, 0, -1, 'WITHSCORES');
+          // convert zrange to string
+          valuePromise = JSON.stringify(zsetData);
+          // valuePromise = json.stringify(valuePromise);
           break;
         case 'hash':
-          valuePromise = JSON.stringify(db.hgetall(key));
+          const hashData = await db.hgetall(key);
+          valuePromise = JSON.stringify(hashData);
+
+          console.log(key);
+          console.log('hash valuePromise', valuePromise);
           break;
         default:
           valuePromise = Promise.resolve('Unsupported type');
       }
       const value = await valuePromise; // Await the value
-      console.log(value);
 
       // Return the structured object
       return { key, value, type };
     })
-  ).then(slow(3000));
+  );
 
   // Return the results as JSON
   return defer({
@@ -70,9 +70,8 @@ export const loader = async () => {
 };
 
 export default function Index() {
-  const { data } =
-    useLoaderData<{ key: string; value: string; type: string }[]>();
-  console.log(data);
+  const { data } = useLoaderData<typeof loader>();
+
   let [isPending] = useTransition();
   console.log(isPending);
   return (
@@ -93,9 +92,12 @@ export default function Index() {
           fallback={<SkeletonDataTable columnsCount={3} rowsCount={20} />}
         >
           <Await resolve={data}>
-            {(data) => (
-              <DataTable loading={false} data={data} columns={columns} />
-            )}
+            {(data) => {
+              console.log(data);
+              return (
+                <DataTable loading={false} data={data} columns={columns} />
+              );
+            }}
           </Await>
         </Suspense>
       </div>

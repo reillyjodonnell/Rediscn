@@ -28,8 +28,11 @@ export const SkeletonDataTable: React.FC<SkeletonDataTableProps> = ({
               {Array.from({ length: rowsCount }, (_, rowIndex) => (
                 <TableRow key={rowIndex}>
                   {Array.from({ length: columnsCount }, (_, colIndex) => (
-                    <TableCell key={colIndex} className="px-16">
-                      <Skeleton className="h-4 w-[300px]" />
+                    <TableCell
+                      key={colIndex}
+                      className={`px-16 ${rowIndex === 0 ? '' : 'py-6'}`}
+                    >
+                      <Skeleton className={`h-4 w-[300px]`} />
                     </TableCell>
                   ))}
                 </TableRow>

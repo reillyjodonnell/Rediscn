@@ -94,7 +94,7 @@ export const columns: ColumnDef<Item>[] = [
       return (
         <div className="flex w-full lg:min-w-[400px] max-w-[500px]">
           {label && (
-            <Badge className="mx-2" variant="outline">
+            <Badge className="mr-2" variant="outline">
               {label}
             </Badge>
           )}
