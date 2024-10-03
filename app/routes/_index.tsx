@@ -24,7 +24,7 @@ export const loader = async () => {
   let cursor = '0'; // Starting point for SCAN
   let keys = [];
   const count = 25; // Limit to first 10 keys
-
+  let hasMore = true;
   do {
     // Use SCAN to fetch keys with a COUNT limit
     const result = await db.scan(cursor, 'COUNT', count);
@@ -38,6 +38,9 @@ export const loader = async () => {
     }
   } while (cursor !== '0'); // SCAN returns '0' when all keys are scanned
 
+  if (cursor === '0') {
+    hasMore = false;
+  }
   const results = Promise.all(
     keys.map(async (key) => {
       const type = await db.type(key); // Determine the type of the key
@@ -83,11 +86,12 @@ export const loader = async () => {
   return defer({
     data: results,
     cursor,
+    hasMore,
   });
 };
 
 export default function Index() {
-  const { data } = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
   return (
     <div className="container mx-auto py-10">
       <Card>
@@ -100,13 +104,16 @@ export default function Index() {
           <Suspense
             fallback={<SkeletonDataTable columnsCount={3} rowsCount={20} />}
           >
-            <Await resolve={data}>
-              {(resolvedData) => (
+            <Await
+              resolve={Promise.all([data.data, data.cursor, data.hasMore])}
+            >
+              {([resolvedData, cursor, hasMore]) => (
                 <DataTable
                   loading={false}
                   data={resolvedData}
                   columns={columns}
-                  cursor={resolvedData.cursor}
+                  cursor={cursor}
+                  hasMore={hasMore}
                 />
               )}
             </Await>
@@ -184,6 +191,7 @@ export async function action({ request }: ActionFunctionArgs) {
       let keys = [];
       let cursor = cursorSent ?? '';
       const count = 25; // Limit to first 10 keys
+      let hasMore = true;
       do {
         // Use SCAN to fetch keys with a COUNT limit
         const result = await db.scan(cursor, 'COUNT', count);
@@ -196,6 +204,10 @@ export async function action({ request }: ActionFunctionArgs) {
           break;
         }
       } while (cursor !== '0'); // SCAN returns '0' when all keys are scanned
+
+      if (cursor === '0') {
+        hasMore = false;
+      }
 
       const results = await Promise.all(
         keys.map(async (key) => {
@@ -237,7 +249,7 @@ export async function action({ request }: ActionFunctionArgs) {
           return { key, value, type };
         })
       );
-      return json({ location: '/', cursor, results }, { status: 200 });
+      return json({ location: '/', cursor, results, hasMore }, { status: 200 });
     }
     default:
       return json({ location: '/' }, { status: 400 });

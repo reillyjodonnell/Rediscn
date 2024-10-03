@@ -2,7 +2,7 @@ import { Row } from '@tanstack/react-table';
 
 import { itemSchema } from '../data/schema';
 import { Button } from './ui/button';
-import { FileEditIcon, PencilLine, TrashIcon } from 'lucide-react';
+import { PencilLine, TrashIcon } from 'lucide-react';
 import { Form } from '@remix-run/react';
 import {
   Dialog,
@@ -13,12 +13,6 @@ import {
 } from './ui/dialog';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
-
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import Document from '@tiptap/extension-document';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import { EditorContent, ReactNodeViewRenderer, useEditor } from '@tiptap/react';
 
 // load all highlight.js languages
 import { createLowlight, common } from 'lowlight';
@@ -35,7 +29,6 @@ const lowlight = createLowlight({
 // Register the JSON language with lowlight
 lowlight.register({ json });
 
-import CodeBlockComponent from '~/components/code-block-component';
 import { Editor } from '@monaco-editor/react';
 import { deepParseJson } from './value-preview';
 
@@ -72,13 +65,6 @@ export function DataTableRowActions<TData>({
           </Button>
         </DialogTrigger>
         <DialogContent className="w-[800px]">
-          {/* <DialogHeader>
-          <DialogTitle>Save preset</DialogTitle>
-          <DialogDescription>
-            This will save the current playground state as a preset which you
-            can access later or share with others.
-          </DialogDescription>
-        </DialogHeader> */}
           <Form method="POST">
             <div className="my-4">
               <div className="grid gap-2">

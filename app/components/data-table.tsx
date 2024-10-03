@@ -40,11 +40,13 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   loading: boolean;
+  hasMore: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  hasMore: hasMoreDefault,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -53,7 +55,7 @@ export function DataTable<TData, TValue>({
     []
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
-
+  const [hasMore, setHasMore] = React.useState(hasMoreDefault);
   const [items, setItems] = React.useState<TData[]>(data);
   const [cursor, setCursor] = React.useState('');
 
@@ -96,14 +98,20 @@ export function DataTable<TData, TValue>({
 
   React.useEffect(() => {
     if (fetcher.data?.results && fetcher.state === 'idle') {
-      console.log('Setting items');
-      console.log(fetcher.data.results);
-      setItems((prev) => [...prev, ...fetcher.data.results]);
+      setItems((prev) => {
+        console.log(
+          'Merged length: ',
+          prev.length + fetcher.data.results.length
+        );
+        return [...prev, ...fetcher.data.results];
+      });
       setCursor(fetcher.data.cursor);
+      setHasMore(fetcher.data.hasMore);
     }
   }, [fetcher.data, fetcher.state]);
 
   function fetchMore() {
+    if (!hasMore) return;
     fetcher.submit({ cursor, intent: 'more' }, { method: 'post' });
   }
 
