@@ -82,6 +82,7 @@ export const loader = async () => {
   // Return the results as JSON
   return defer({
     data: results,
+    cursor,
   });
 };
 
@@ -105,6 +106,7 @@ export default function Index() {
                   loading={false}
                   data={resolvedData}
                   columns={columns}
+                  cursor={resolvedData.cursor}
                 />
               )}
             </Await>
@@ -176,6 +178,67 @@ export async function action({ request }: ActionFunctionArgs) {
       await db.del(key);
       return json({ location: '/' }, { status: 200 });
 
+    case 'more': {
+      console.log('MORE');
+      const cursorSent = body.get('cursor')?.toString();
+      let keys = [];
+      let cursor = cursorSent ?? '';
+      const count = 25; // Limit to first 10 keys
+      do {
+        // Use SCAN to fetch keys with a COUNT limit
+        const result = await db.scan(cursor, 'COUNT', count);
+        cursor = result[0]; // The new cursor value
+        keys = keys.concat(result[1]); // Add found keys to the list
+
+        if (keys.length >= count) {
+          // Break the loop once we've fetched 10 keys
+          keys = keys.slice(0, count); // Ensure only 10 keys are returned
+          break;
+        }
+      } while (cursor !== '0'); // SCAN returns '0' when all keys are scanned
+
+      const results = await Promise.all(
+        keys.map(async (key) => {
+          const type = await db.type(key); // Determine the type of the key
+          let valuePromise; // Placeholder for the value
+          switch (type) {
+            case 'string':
+              valuePromise = db.get(key) ?? '';
+              break;
+            case 'list':
+              // Retrieve the entire list (consider limiting the range for large lists)
+              const listData = await db.lrange(key, 0, -1);
+              valuePromise = JSON.stringify(listData);
+              break;
+            case 'set':
+              const setData = db.smembers(key);
+              valuePromise = JSON.stringify(setData);
+              break;
+            case 'zset':
+              // Retrieve the entire sorted set (consider limiting the range for large sets)
+              const zsetData = db.zrange(key, 0, -1, 'WITHSCORES');
+              // convert zrange to string
+              valuePromise = JSON.stringify(zsetData);
+              // valuePromise = json.stringify(valuePromise);
+              break;
+            case 'hash':
+              const hashData = await db.hgetall(key);
+              valuePromise = JSON.stringify(hashData);
+
+              console.log(key);
+              console.log('hash valuePromise', valuePromise);
+              break;
+            default:
+              valuePromise = Promise.resolve('Unsupported type');
+          }
+          const value = await valuePromise; // Await the value
+
+          // Return the structured object
+          return { key, value, type };
+        })
+      );
+      return json({ location: '/', cursor, results }, { status: 200 });
+    }
     default:
       return json({ location: '/' }, { status: 400 });
   }

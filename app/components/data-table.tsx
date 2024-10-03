@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -31,8 +31,10 @@ import { Cross2Icon } from '@radix-ui/react-icons';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { DataTableViewOptions } from './data-table-view-options';
-import { Form } from '@remix-run/react';
+import { Form, useFetcher } from '@remix-run/react';
 import { CreateButton } from './create-button';
+
+import { useInView } from 'react-intersection-observer';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -52,8 +54,11 @@ export function DataTable<TData, TValue>({
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
+  const [items, setItems] = React.useState<TData[]>(data);
+  const [cursor, setCursor] = React.useState('');
+
   const table = useReactTable({
-    data,
+    data: items,
     columns,
     state: {
       sorting,
@@ -79,13 +84,28 @@ export function DataTable<TData, TValue>({
   const parentRef = React.useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
-    count: rows.length,
+    count: items.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 65,
     overscan: 20,
   });
 
+  const fetcher = useFetcher();
+
   const isFiltered = table.getState().columnFilters.length > 0;
+
+  React.useEffect(() => {
+    if (fetcher.data?.results && fetcher.state === 'idle') {
+      console.log('Setting items');
+      console.log(fetcher.data.results);
+      setItems((prev) => [...prev, ...fetcher.data.results]);
+      setCursor(fetcher.data.cursor);
+    }
+  }, [fetcher.data, fetcher.state]);
+
+  function fetchMore() {
+    fetcher.submit({ cursor, intent: 'more' }, { method: 'post' });
+  }
 
   return (
     <div className="space-y-4 flex-1 h-full">
@@ -142,9 +162,13 @@ export function DataTable<TData, TValue>({
                 const row = rows[virtualRow.index] as Row<Item>;
 
                 return (
-                  <TableRow
+                  <RowComponent
+                    addIntersectionObserver={
+                      virtualRow.index === rows.length - 10
+                    }
                     key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
+                    inViewFunction={fetchMore}
+                    dataState={row.getIsSelected() && 'selected'}
                     style={{
                       height: `${virtualRow.size}px`,
                       transform: `translateY(${
@@ -160,7 +184,7 @@ export function DataTable<TData, TValue>({
                         )}
                       </TableCell>
                     ))}
-                  </TableRow>
+                  </RowComponent>
                 );
               })}
             </TableBody>
@@ -168,5 +192,39 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
     </div>
+  );
+}
+
+function RowComponent({
+  dataState,
+  style,
+  children,
+  addIntersectionObserver,
+  inViewFunction,
+}: {
+  dataState: string | boolean;
+  style: React.CSSProperties;
+  children: React.ReactNode;
+  addIntersectionObserver: boolean;
+  inViewFunction?: () => void;
+}) {
+  const { ref } = useInView({
+    triggerOnce: true,
+    onChange: (inView) => {
+      if (inView && inViewFunction) {
+        inViewFunction();
+      }
+    },
+    threshold: 0.2,
+  });
+
+  return (
+    <TableRow
+      ref={addIntersectionObserver ? ref : undefined}
+      data-state={dataState}
+      style={style}
+    >
+      {children}
+    </TableRow>
   );
 }

@@ -42,10 +42,17 @@ function ValuePreviewComponent({
     navigator.clipboard.writeText(editorValue);
   };
 
-  const deeplyParsedJson = React.useMemo(
-    () => JSON.stringify(deepParseJson(JSON.parse(value)), null, 2),
-    [value]
-  );
+  // Memoized deep parsing logic
+  const deeplyParsedJson = React.useMemo(() => {
+    try {
+      // If value is valid JSON, parse it and deep parse
+      const parsed = JSON.parse(value);
+      return JSON.stringify(deepParseJson(parsed), null, 2);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return value; // Return the raw value if it's not valid JSON
+    }
+  }, [value]);
 
   return (
     <Dialog>
