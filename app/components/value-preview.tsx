@@ -1,22 +1,6 @@
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import Document from '@tiptap/extension-document';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import { EditorContent, ReactNodeViewRenderer, useEditor } from '@tiptap/react';
-// load all highlight.js languages
-import { createLowlight, common } from 'lowlight';
+import Editor from '@monaco-editor/react';
+
 import React, { useTransition } from 'react';
-
-import json from 'highlight.js/lib/languages/json';
-import 'highlight.js/styles/github-dark.css';
-
-// Configure Lowlight with JSON
-const lowlight = createLowlight({
-  ...common,
-});
-
-// Register the JSON language with lowlight
-lowlight.register({ json });
 
 import CodeBlockComponent from '~/components/code-block-component';
 import {
@@ -32,8 +16,13 @@ import { Form } from '@remix-run/react';
 import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import { Copy, Maximize2 } from 'lucide-react';
+import { cn } from '~/lib/utils';
 
-export function ValuePreview({
+// memoize the ValuePreview component
+export const ValuePreview = React.memo(ValuePreviewComponent);
+
+function ValuePreviewComponent({
   rowKey,
   value,
   label,
@@ -44,49 +33,19 @@ export function ValuePreview({
   label: string;
   type: string;
 }) {
-  const editor = useEditor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      CodeBlockLowlight.extend({
-        addNodeView() {
-          return ReactNodeViewRenderer(CodeBlockComponent);
-        },
-      }).configure({
-        // Pass lowlight instance directly without additional configuration here
-        lowlight,
-      }),
-    ],
-    content: '',
-  });
-
-  React.useEffect(() => {
-    let formattedValue = value;
-
-    try {
-      // Attempt to parse the JSON to see if it is valid
-      //recursively go through each layer and parse
-      const json = JSON.parse(value);
-
-      // Prettify and format the JSON string
-      formattedValue = JSON.stringify(deepParseJson(json), null, 2);
-    } catch (error) {
-      // If it's not valid JSON, you could handle it differently or just use the original value
-      console.error('Provided value is not valid JSON:', error);
-    }
-
-    // Update the editor content with the formatted JSON inside a code block
-    if (editor) {
-      editor.commands.setContent(`
-        <pre>${formattedValue}</pre>
-      `);
-    }
-  }, [value, editor]);
-
   const [isRaw, setIsRaw] = React.useState(false);
-
   let transition = useTransition();
+  const [isMaximized, setIsMaximized] = React.useState(false);
+  const [editorValue, setEditorValue] = React.useState(value);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(editorValue);
+  };
+
+  const deeplyParsedJson = React.useMemo(
+    () => JSON.stringify(deepParseJson(JSON.parse(value)), null, 2),
+    [value]
+  );
 
   return (
     <Dialog>
@@ -95,31 +54,63 @@ export function ValuePreview({
           {value}
         </span>
       </DialogTrigger>
-      <DialogContent className="">
-        <Form method="POST">
-          <input type="hidden" name="preset" value={type} />
-          <input type="hidden" name="label" value={label} />
-          <div className="my-4">
-            <div className="grid gap-2">
-              <Label htmlFor="key">Key</Label>
-              <Input id="key" type="text" value={rowKey} />
-            </div>
+      <DialogContent
+        className={`${
+          isMaximized ? 'w-screen h-screen max-w-none' : 'max-w-3xl'
+        }`}
+      >
+        <Form method="POST" className="space-y-4">
+          <input type="hidden" name="preset" value={type} readOnly />
+          <input type="hidden" name="label" value={label} readOnly />
+          <div className="flex items-center space-x-4 mb-4">
+            <Label htmlFor="key" className="min-w-[60px]">
+              Key:
+            </Label>
+            <Input
+              id="key"
+              type="text"
+              value={rowKey}
+              readOnly
+              className="flex-grow font-mono text-sm"
+            />
           </div>
           <div className="grid gap-2">
-            <div className="flex ">
-              <Label htmlFor="value">Value</Label>
-              <div className="flex items-center space-x-2 ml-auto">
-                <Switch
-                  checked={isRaw}
-                  onCheckedChange={() => setIsRaw((prev) => !prev)}
-                  id="raw"
-                />
-                <Label htmlFor="raw">Raw JSON</Label>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="value" className="text-lg font-semibold">
+                Value
+              </Label>
+              <div className="flex items-center space-x-4">
+                <Button variant="outline" size="sm" onClick={handleCopy}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsMaximized(!isMaximized)}
+                >
+                  <Maximize2 className="mr-2 h-4 w-4" />
+                  {isMaximized ? 'Minimize' : 'Maximize'}
+                </Button>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={isRaw}
+                    onCheckedChange={() => setIsRaw((prev) => !prev)}
+                    id="raw"
+                  />
+                  <Label htmlFor="raw">Raw JSON</Label>
+                </div>
               </div>
             </div>
             {isRaw ? (
               <div className="my-4">
-                <Textarea name="value" id="value" defaultValue={value} />
+                <Textarea
+                  name="value"
+                  id="value"
+                  defaultValue={value}
+                  className="min-h-[400px] font-mono"
+                  onChange={(e) => setEditorValue(e.target.value)}
+                />
               </div>
             ) : (
               <>
@@ -127,13 +118,29 @@ export function ValuePreview({
                   type="hidden"
                   name="value"
                   id="value"
-                  value={editor?.state.doc.textContent ?? value}
+                  value={editorValue}
                 />
-                <EditorContent placeholder="No text" editor={editor} />
+                <Editor
+                  onChange={(value) => setEditorValue(value ?? '')}
+                  theme="vs-dark"
+                  className={cn(
+                    `w-full h-full  min-h-[400px]`,
+                    isMaximized && 'min-h-[70vh]'
+                  )}
+                  defaultLanguage="json"
+                  language="json"
+                  defaultValue={deeplyParsedJson}
+                  options={{
+                    minimap: { enabled: false },
+
+                    scrollBeyondLastLine: false,
+                    fontSize: 14,
+                  }}
+                />
               </>
             )}
             <input type="hidden" name="intent" value="edit" />
-            <input type="hidden" name="key" id="key" value={rowKey} />
+            <input type="hidden" name="key" id="key" value={rowKey} readOnly />
           </div>
           <DialogFooter>
             <DialogClose asChild>
@@ -146,7 +153,7 @@ export function ValuePreview({
   );
 }
 
-function deepParseJson(obj: any) {
+export function deepParseJson(obj: any) {
   Object.keys(obj).forEach((key) => {
     try {
       // Attempt to parse the property if it's a string

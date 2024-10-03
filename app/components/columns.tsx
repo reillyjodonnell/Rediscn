@@ -98,7 +98,6 @@ export const columns: ColumnDef<Item>[] = [
               {label}
             </Badge>
           )}
-
           <ValuePreview
             type={type}
             label={label}

@@ -5,11 +5,12 @@ import {
   type MetaFunction,
 } from '@remix-run/node';
 import { Form, useLoaderData, Await } from '@remix-run/react';
-import { Suspense, useTransition } from 'react';
+import { Suspense } from 'react';
 import { SkeletonDataTable } from '~/components/TableSkeleton';
 import { columns } from '~/components/columns';
 import { CreateButton } from '~/components/create-button';
 import { DataTable } from '~/components/data-table';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { db } from '~/utils/db.server';
 
 export const meta: MetaFunction = () => {
@@ -20,7 +21,22 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader = async () => {
-  const keys = await db.keys('*');
+  let cursor = '0'; // Starting point for SCAN
+  let keys = [];
+  const count = 25; // Limit to first 10 keys
+
+  do {
+    // Use SCAN to fetch keys with a COUNT limit
+    const result = await db.scan(cursor, 'COUNT', count);
+    cursor = result[0]; // The new cursor value
+    keys = keys.concat(result[1]); // Add found keys to the list
+
+    if (keys.length >= count) {
+      // Break the loop once we've fetched 10 keys
+      keys = keys.slice(0, count); // Ensure only 10 keys are returned
+      break;
+    }
+  } while (cursor !== '0'); // SCAN returns '0' when all keys are scanned
 
   const results = Promise.all(
     keys.map(async (key) => {
@@ -71,36 +87,30 @@ export const loader = async () => {
 
 export default function Index() {
   const { data } = useLoaderData<typeof loader>();
-
-  let [isPending] = useTransition();
-  console.log(isPending);
   return (
-    <div className=" h-full flex-1 flex-col space-y-8 p-8 flex">
-      <div className="p-4">
-        <div className="flex items-center justify-between space-y-2">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Rediscn!</h2>
-            <p className="text-muted-foreground">Here&apos;s your data</p>
-          </div>
-          <div className="ml-auto ">
-            <Form method="post">
-              <CreateButton />
-            </Form>
-          </div>
-        </div>
-        <Suspense
-          fallback={<SkeletonDataTable columnsCount={3} rowsCount={20} />}
-        >
-          <Await resolve={data}>
-            {(data) => {
-              console.log(data);
-              return (
-                <DataTable loading={false} data={data} columns={columns} />
-              );
-            }}
-          </Await>
-        </Suspense>
-      </div>
+    <div className="container mx-auto py-10">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold">
+            RedisCN Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Suspense
+            fallback={<SkeletonDataTable columnsCount={3} rowsCount={20} />}
+          >
+            <Await resolve={data}>
+              {(resolvedData) => (
+                <DataTable
+                  loading={false}
+                  data={resolvedData}
+                  columns={columns}
+                />
+              )}
+            </Await>
+          </Suspense>
+        </CardContent>
+      </Card>
     </div>
   );
 }

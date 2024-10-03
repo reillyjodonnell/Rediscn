@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -24,8 +24,16 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
-import { DataTableToolbar } from './data-table-toolbar';
 import { Item } from '~/data/schema';
+
+import { Cross2Icon } from '@radix-ui/react-icons';
+
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { DataTableViewOptions } from './data-table-view-options';
+import { Form } from '@remix-run/react';
+import { CreateButton } from './create-button';
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -77,12 +85,38 @@ export function DataTable<TData, TValue>({
     overscan: 20,
   });
 
+  const isFiltered = table.getState().columnFilters.length > 0;
+
   return (
-    <div className="space-y-4">
-      <div className="my-4">
-        <DataTableToolbar table={table} />
+    <div className="space-y-4 flex-1 h-full">
+      <div className="flex items-center justify-start space-x-2">
+        <div className="flex items-center space-x-2">
+          <Input
+            placeholder="Filter data..."
+            value={(table.getColumn('key')?.getFilterValue() as string) ?? ''}
+            onChange={(event) =>
+              table.getColumn('key')?.setFilterValue(event.target.value)
+            }
+            className="h-8 w-full max-w-[300px]"
+          />
+
+          {isFiltered && (
+            <Button
+              variant="ghost"
+              onClick={() => table.resetColumnFilters()}
+              className="h-8 px-2 lg:px-3 justify-center items-center flex"
+            >
+              Reset
+              <Cross2Icon className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <DataTableViewOptions table={table} />
+        <Form className="flex-1 flex justify-end" method="post">
+          <CreateButton />
+        </Form>
       </div>
-      <div ref={parentRef} className="h-[600px] overflow-auto">
+      <div ref={parentRef} className="flex-1 h-full overflow-auto max-h-[90vh]">
         <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
           <Table className="rounded-md border">
             <TableHeader>

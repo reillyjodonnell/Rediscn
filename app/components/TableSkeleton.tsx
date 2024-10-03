@@ -21,25 +21,23 @@ export const SkeletonDataTable: React.FC<SkeletonDataTableProps> = ({
           <Skeleton className="h-8 w-20" />
         </div>
       </div>
-      <div className="">
-        <div className="space-y-4">
-          <Table className="rounded-md border">
-            <TableBody>
-              {Array.from({ length: rowsCount }, (_, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {Array.from({ length: columnsCount }, (_, colIndex) => (
-                    <TableCell
-                      key={colIndex}
-                      className={`px-16 ${rowIndex === 0 ? '' : 'py-6'}`}
-                    >
-                      <Skeleton className={`h-4 w-[300px]`} />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      <div className="flex-1 h-full overflow-auto max-h-[90vh]">
+        <Table className="rounded-md border">
+          <TableBody>
+            {Array.from({ length: rowsCount }, (_, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {Array.from({ length: columnsCount }, (_, colIndex) => (
+                  <TableCell
+                    key={colIndex}
+                    className={`px-16 ${rowIndex === 0 ? '' : 'py-6'}`}
+                  >
+                    <Skeleton className={`h-4 w-[300px]`} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -36,6 +36,8 @@ const lowlight = createLowlight({
 lowlight.register({ json });
 
 import CodeBlockComponent from '~/components/code-block-component';
+import { Editor } from '@monaco-editor/react';
+import { deepParseJson } from './value-preview';
 
 interface DataTableRowActionsProps<TData>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -48,43 +50,11 @@ export function DataTableRowActions<TData>({
 }: DataTableRowActionsProps<TData>) {
   const { value, key } = itemSchema.parse(row.original);
 
-  const editor = useEditor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      CodeBlockLowlight.extend({
-        addNodeView() {
-          return ReactNodeViewRenderer(CodeBlockComponent);
-        },
-      }).configure({
-        // Pass lowlight instance directly without additional configuration here
-        lowlight,
-      }),
-    ],
-    content: '',
-  });
+  const deeplyParsedJson = React.useMemo(
+    () => JSON.stringify(deepParseJson(JSON.parse(value)), null, 2),
+    [value]
+  );
 
-  React.useEffect(() => {
-    let formattedValue = value;
-
-    try {
-      // Attempt to parse the JSON to see if it is valid
-      const json = JSON.parse(value);
-      // Prettify and format the JSON string
-      formattedValue = JSON.stringify(json, null, 2);
-    } catch (error) {
-      // If it's not valid JSON, you could handle it differently or just use the original value
-      console.error('Provided value is not valid JSON:', error);
-    }
-
-    // Update the editor content with the formatted JSON inside a code block
-    if (editor) {
-      editor.commands.setContent(`
-        <pre>${formattedValue}</pre>
-      `);
-    }
-  }, [value, editor]);
   return (
     <div {...props} className=" flex ">
       <Dialog>
@@ -94,7 +64,7 @@ export function DataTableRowActions<TData>({
             <span className="sr-only">Edit</span>
           </Button>
         </DialogTrigger>
-        <DialogContent className="">
+        <DialogContent className="w-[800px]">
           {/* <DialogHeader>
           <DialogTitle>Save preset</DialogTitle>
           <DialogDescription>
@@ -111,15 +81,24 @@ export function DataTableRowActions<TData>({
             </div>
             <div className="grid gap-2">
               <Label>Value</Label>
-              <EditorContent placeholder="No text" editor={editor} />
-
+              <Editor
+                onChange={(value) => console.log(value)}
+                theme="vs-dark"
+                className="w-full h-full min-h-[400px]"
+                defaultLanguage="json"
+                language="json"
+                defaultValue={
+                  // Prettify and format the JSON string
+                  deeplyParsedJson
+                }
+              />
               <input type="hidden" name="intent" value="edit" />
               <input type="hidden" name="key" id="key" value={key} />
               <input
                 type="hidden"
                 name="value"
                 id="value"
-                value={editor?.state.doc.textContent ?? value}
+                // value={editor?.state.doc.textContent ?? value}
               />
             </div>
             <DialogFooter>
